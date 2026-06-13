@@ -1,8 +1,10 @@
-Flask==2.3.2
-argon2-cffi==21.3.0
-PyJWT==2.8.0
-Werkzeug==2.3.6
-mysql-connector-python==8.0.33
-mysqlclient
-python-dotenv
-gunicorn==21.2.0
+# ============================================================
+#  AlertaU Web - Panel de gestion de incidencias (Flask)
+#  Instalar con:  pip install -r requirements.txt
+# ============================================================
+Flask==3.0.3            # Framework web (rutas, plantillas Jinja2, sesiones)
+PyMySQL==1.1.1          # Driver MySQL en Python puro (no requiere compilador en Windows).
+                        # Se registra como 'MySQLdb' en conexionBD.py para no cambiar el codigo.
+argon2-cffi==25.1.0     # Hash seguro de contrasenas (argon2)
+python-dotenv==1.0.1    # Cargar variables de entorno desde .env en local
+gunicorn==23.0.0        # Servidor WSGI para produccion (Railway / Render)

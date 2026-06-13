@@ -1,8 +1,24 @@
+# --- Python ---
 __pycache__/
 *.pyc
 *.pyo
-.env
+
+# --- Entornos virtuales ---
 venv/
 .venv/
+
+# --- Variables de entorno (NUNCA subir credenciales) ---
+.env
+
+# --- Editores ---
 .idea/
 .vscode/
+
+# --- Evidencias / fotos subidas por los usuarios en local ---
+# Se conserva la carpeta y la imagen 'default' con un .gitkeep,
+# pero no se suben las imagenes reales subidas durante las pruebas.
+uploads/evidencias/*
+!uploads/evidencias/.gitkeep
+uploads/usuarios/*
+!uploads/usuarios/.gitkeep
+!uploads/**/default.png

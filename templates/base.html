@@ -1,0 +1,88 @@
+<!--
+  ============================================================
+   base.html  -  Plantilla base del panel (layout comun)
+  ------------------------------------------------------------
+   Todas las paginas del panel "heredan" de esta plantilla usando
+   la etiqueta extends de Jinja. Aqui esta la barra de navegacion,
+   los mensajes flash (avisos) y el bloque 'contenido' que cada
+   pagina rellena. Usa Bootstrap 5 cargado por CDN.
+  ============================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block titulo %}AlertaU - Panel{% endblock %}</title>
+  <!-- Bootstrap 5 (CSS) e iconos, desde CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Estilos propios -->
+  <link href="{{ url_for('static', filename='css/estilos.css') }}" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+  <!-- Barra de navegacion superior -->
+  <nav class="navbar navbar-expand-lg navbar-dark" style="background-color:#0d3b66;">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="{{ url_for('ws_dashboard.dashboard') }}">
+        <i class="bi bi-shield-exclamation"></i> AlertaU
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="menu">
+        <!-- Enlaces principales del panel -->
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('ws_dashboard.dashboard') }}">
+              <i class="bi bi-speedometer2"></i> Panel
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('ws_incidencias.lista') }}">
+              <i class="bi bi-card-list"></i> Incidencias
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('ws_usuarios.lista') }}">
+              <i class="bi bi-people"></i> Usuarios
+            </a>
+          </li>
+        </ul>
+        <!-- Usuario en sesion + cerrar sesion -->
+        <span class="navbar-text text-white me-3">
+          <i class="bi bi-person-circle"></i> {{ session.get('nombre') }}
+          <small class="text-white-50">({{ session.get('rol') }})</small>
+        </span>
+        <a class="btn btn-outline-light btn-sm" href="{{ url_for('ws_auth.logout') }}">
+          <i class="bi bi-box-arrow-right"></i> Salir
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Contenedor principal -->
+  <div class="container my-4">
+
+    <!-- Mensajes flash (avisos de exito, error, advertencia) -->
+    {% with mensajes = get_flashed_messages(with_categories=true) %}
+      {% if mensajes %}
+        {% for categoria, texto in mensajes %}
+          <div class="alert alert-{{ categoria }} alert-dismissible fade show" role="alert">
+            {{ texto }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Contenido propio de cada pagina -->
+    {% block contenido %}{% endblock %}
+  </div>
+
+  <!-- Bootstrap 5 (JS) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

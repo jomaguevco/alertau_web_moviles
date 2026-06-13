@@ -1,0 +1,100 @@
+<!--
+  ============================================================
+   dashboard.html  -  Panel resumen (req. web #10 y #9)
+  ------------------------------------------------------------
+   Muestra tarjetas con indicadores clave y barras simples con
+   las incidencias por categoria, urgencia y estado.
+  ============================================================
+-->
+{% extends 'base.html' %}
+{% block titulo %}AlertaU - Panel resumen{% endblock %}
+
+{% block contenido %}
+<h3 class="mb-4"><i class="bi bi-speedometer2"></i> Panel resumen</h3>
+
+<!-- ===== Tarjetas de indicadores clave ===== -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card text-bg-primary shadow-sm">
+      <div class="card-body">
+        <div class="h2 mb-0">{{ resumen.total }}</div>
+        <div><i class="bi bi-card-list"></i> Total incidencias</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-bg-danger shadow-sm">
+      <div class="card-body">
+        <div class="h2 mb-0">{{ resumen.criticas }}</div>
+        <div><i class="bi bi-exclamation-triangle"></i> Casos criticos</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-bg-warning shadow-sm">
+      <div class="card-body">
+        <div class="h2 mb-0">{{ resumen.abiertas }}</div>
+        <div><i class="bi bi-hourglass-split"></i> Casos abiertos</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-bg-success shadow-sm">
+      <div class="card-body">
+        <div class="h2 mb-0">{{ resumen.pct_cerradas }}%</div>
+        <div><i class="bi bi-check2-circle"></i> Casos cerrados</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Reportes por categoria / urgencia / estado ===== -->
+<div class="row g-3">
+
+  <!-- Incidencias por categoria (tipo) -->
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white fw-bold"><i class="bi bi-tags"></i> Por tipo (categoria)</div>
+      <ul class="list-group list-group-flush">
+        {% for fila in por_categoria %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ fila.etiqueta }}
+            <span class="badge bg-primary rounded-pill">{{ fila.cantidad }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- Incidencias por urgencia -->
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white fw-bold"><i class="bi bi-flag"></i> Por urgencia</div>
+      <ul class="list-group list-group-flush">
+        {% for fila in por_urgencia %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ fila.etiqueta }}
+            <span class="badge bg-secondary rounded-pill">{{ fila.cantidad }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- Incidencias por estado -->
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white fw-bold"><i class="bi bi-list-check"></i> Por estado</div>
+      <ul class="list-group list-group-flush">
+        {% for fila in por_estado %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ fila.etiqueta }}
+            <span class="badge bg-info text-dark rounded-pill">{{ fila.cantidad }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

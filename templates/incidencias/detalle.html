@@ -1,0 +1,182 @@
+<!--
+  ============================================================
+   incidencias/detalle.html  -  Detalle de una incidencia
+  ------------------------------------------------------------
+   Reune varios requerimientos web en una sola pantalla:
+     #5 Visualizacion de evidencias y datos completos
+     #4 Cambio de estado (con trazabilidad)
+     #3 Derivacion a un area responsable
+     #7 Chat / seguimiento
+     #8 Ubicacion geografica (enlace a Google Maps)
+  ============================================================
+-->
+{% extends 'base.html' %}
+{% block titulo %}AlertaU - Incidencia #{{ inc.id }}{% endblock %}
+
+{% block contenido %}
+<a href="{{ url_for('ws_incidencias.lista') }}" class="btn btn-sm btn-outline-secondary mb-3">
+  <i class="bi bi-arrow-left"></i> Volver a la lista
+</a>
+
+<div class="row g-3">
+
+  <!-- ============ COLUMNA IZQUIERDA: datos + acciones ============ -->
+  <div class="col-lg-6">
+
+    <!-- Datos completos de la incidencia (req. #5) -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span class="fw-bold">Incidencia #{{ inc.id }}</span>
+        <span class="badge bg-info text-dark">{{ inc.estado }}</span>
+      </div>
+      <div class="card-body">
+        {% if inc.es_alerta_rapida %}
+          <div class="alert alert-danger py-1"><i class="bi bi-exclamation-triangle"></i> Alerta rapida (caso critico)</div>
+        {% endif %}
+        <p>{{ inc.descripcion }}</p>
+        <ul class="list-unstyled small mb-0">
+          <li><strong>Tipo:</strong> {{ inc.categoria or '-' }}</li>
+          <li><strong>Urgencia:</strong> {{ inc.urgencia or '-' }}</li>
+          <li><strong>Reportante:</strong> {{ inc.reportante }} ({{ inc.reportante_correo }})</li>
+          <li><strong>Ubicacion:</strong> {{ inc.ubicacion or 'No especificada' }}</li>
+          <li><strong>Fecha:</strong> {{ inc.fecha.strftime('%d/%m/%Y %H:%M') if inc.fecha else '-' }}</li>
+          {% if inc.latitud and inc.longitud %}
+            <li>
+              <strong>Coordenadas:</strong> {{ inc.latitud }}, {{ inc.longitud }}
+              <a class="ms-1" target="_blank"
+                 href="https://www.google.com/maps?q={{ inc.latitud }},{{ inc.longitud }}">
+                 <i class="bi bi-geo-alt"></i> Ver en Google Maps
+              </a>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+
+    <!-- Evidencias (req. #5) -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-white fw-bold"><i class="bi bi-images"></i> Evidencias</div>
+      <div class="card-body">
+        {% if evidencias %}
+          <div class="row g-2">
+            {% for ev in evidencias %}
+              <div class="col-4">
+                <a href="{{ url_for('ws_incidencias.ver_evidencia', nombre_imagen=ev.url_imagen) }}" target="_blank">
+                  <img src="{{ url_for('ws_incidencias.ver_evidencia', nombre_imagen=ev.url_imagen) }}"
+                       class="img-fluid rounded border" alt="evidencia">
+                </a>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted mb-0">No hay evidencias adjuntas.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Accion: cambiar estado (req. #4) -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-white fw-bold"><i class="bi bi-arrow-repeat"></i> Cambiar estado</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('ws_incidencias.cambiar_estado', id_incidencia=inc.id) }}">
+          <div class="mb-2">
+            <select name="id_estado" class="form-select form-select-sm" required>
+              <option value="">Selecciona un estado...</option>
+              {% for e in estados %}
+                <option value="{{ e.id }}">{{ e.nombre }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-2">
+            <input type="text" name="comentario" class="form-control form-control-sm" placeholder="Comentario (opcional)">
+          </div>
+          <button class="btn btn-sm btn-primary"><i class="bi bi-check2"></i> Actualizar estado</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Accion: derivar a un area (req. #3) -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-white fw-bold"><i class="bi bi-diagram-3"></i> Derivar a un area</div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('ws_incidencias.derivar', id_incidencia=inc.id) }}">
+          <div class="mb-2">
+            <select name="id_area" class="form-select form-select-sm" required>
+              <option value="">Selecciona un area...</option>
+              {% for a in areas %}
+                <option value="{{ a.id }}">{{ a.nombre }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-2">
+            <input type="text" name="comentario" class="form-control form-control-sm" placeholder="Comentario (opcional)">
+          </div>
+          <button class="btn btn-sm btn-warning"><i class="bi bi-send"></i> Derivar</button>
+        </form>
+        {% if derivaciones %}
+          <hr>
+          <small class="text-muted">Derivaciones previas:</small>
+          <ul class="small mb-0">
+            {% for d in derivaciones %}
+              <li>{{ d.area }} <span class="text-muted">({{ d.fecha.strftime('%d/%m/%Y %H:%M') }})</span></li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ COLUMNA DERECHA: trazabilidad + chat ============ -->
+  <div class="col-lg-6">
+
+    <!-- Linea de tiempo / trazabilidad (req. #4) -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-header bg-white fw-bold"><i class="bi bi-clock-history"></i> Linea de tiempo</div>
+      <div class="card-body">
+        <ul class="list-group list-group-flush">
+          {% for h in linea_tiempo %}
+            <li class="list-group-item">
+              <div class="d-flex justify-content-between">
+                <span class="badge bg-secondary">{{ h.estado }}</span>
+                <small class="text-muted">{{ h.fecha.strftime('%d/%m/%Y %H:%M') }}</small>
+              </div>
+              {% if h.area %}<div class="small">Area: {{ h.area }}</div>{% endif %}
+              {% if h.comentario %}<div class="small text-muted">"{{ h.comentario }}"</div>{% endif %}
+              {% if h.responsable %}<div class="small text-muted">por {{ h.responsable }}</div>{% endif %}
+            </li>
+          {% else %}
+            <li class="list-group-item text-muted">Sin historial.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <!-- Chat / seguimiento (req. #7) -->
+    <div class="card shadow-sm">
+      <div class="card-header bg-white fw-bold"><i class="bi bi-chat-dots"></i> Chat de seguimiento</div>
+      <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+        {% for m in mensajes %}
+          <div class="mb-2">
+            <div>
+              <strong class="small">{{ m.autor }}</strong>
+              <span class="badge bg-light text-dark">{{ m.rol_autor }}</span>
+              <small class="text-muted">{{ m.fecha.strftime('%d/%m/%Y %H:%M') }}</small>
+            </div>
+            <div class="border rounded p-2 bg-light">{{ m.mensaje }}</div>
+          </div>
+        {% else %}
+          <p class="text-muted">Aun no hay mensajes.</p>
+        {% endfor %}
+      </div>
+      <div class="card-footer bg-white">
+        <form method="POST" action="{{ url_for('ws_incidencias.enviar_mensaje', id_incidencia=inc.id) }}" class="d-flex gap-2">
+          <input type="text" name="mensaje" class="form-control form-control-sm" placeholder="Escribe un mensaje..." required>
+          <button class="btn btn-sm btn-primary"><i class="bi bi-send"></i></button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

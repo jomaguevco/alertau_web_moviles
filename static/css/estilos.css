@@ -1,0 +1,27 @@
+/* ============================================================
+   estilos.css  -  Estilos propios del panel AlertaU
+   ------------------------------------------------------------
+   Solo unos pocos ajustes sobre Bootstrap (se mantiene basico).
+   ============================================================ */
+
+/* Color institucional usado en la barra y botones principales */
+:root {
+  --alertau-azul: #0d3b66;
+}
+
+/* Que las tarjetas tengan un pequeno realce al pasar el mouse */
+.card {
+  transition: box-shadow 0.15s ease-in-out;
+}
+
+/* Enlaces de la barra de navegacion un poco mas legibles */
+.navbar .nav-link {
+  font-weight: 500;
+}
+
+/* Imagenes de evidencia con una altura uniforme */
+.card img.img-fluid {
+  height: 90px;
+  object-fit: cover;
+  width: 100%;
+}

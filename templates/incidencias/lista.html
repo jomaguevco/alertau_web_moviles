@@ -1,0 +1,118 @@
+<!--
+  ============================================================
+   incidencias/lista.html  -  Gestion de incidencias (req. web #2)
+  ------------------------------------------------------------
+   Formulario de filtros (estado, categoria, urgencia, area,
+   rango de fechas) + tabla con todas las incidencias.
+  ============================================================
+-->
+{% extends 'base.html' %}
+{% block titulo %}AlertaU - Incidencias{% endblock %}
+
+{% block contenido %}
+<h3 class="mb-3"><i class="bi bi-card-list"></i> Gestion de incidencias</h3>
+
+<!-- ===== Filtros (se envian por GET para que queden en la URL) ===== -->
+<form class="card card-body shadow-sm mb-3" method="GET" action="{{ url_for('ws_incidencias.lista') }}">
+  <div class="row g-2 align-items-end">
+
+    <div class="col-md-2">
+      <label class="form-label mb-0 small">Estado</label>
+      <select name="id_estado" class="form-select form-select-sm">
+        <option value="">Todos</option>
+        {% for e in estados %}
+          <option value="{{ e.id }}" {% if filtros.id_estado == e.id|string %}selected{% endif %}>{{ e.nombre }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label mb-0 small">Tipo</label>
+      <select name="id_categoria" class="form-select form-select-sm">
+        <option value="">Todos</option>
+        {% for c in categorias %}
+          <option value="{{ c.id }}" {% if filtros.id_categoria == c.id|string %}selected{% endif %}>{{ c.nombre }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label mb-0 small">Urgencia</label>
+      <select name="id_urgencia" class="form-select form-select-sm">
+        <option value="">Todas</option>
+        {% for u in urgencias %}
+          <option value="{{ u.id }}" {% if filtros.id_urgencia == u.id|string %}selected{% endif %}>{{ u.nombre }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label mb-0 small">Area</label>
+      <select name="id_area" class="form-select form-select-sm">
+        <option value="">Todas</option>
+        {% for a in areas %}
+          <option value="{{ a.id }}" {% if filtros.id_area == a.id|string %}selected{% endif %}>{{ a.nombre }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label mb-0 small">Desde</label>
+      <input type="date" name="fecha_desde" class="form-control form-control-sm" value="{{ filtros.fecha_desde or '' }}">
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label mb-0 small">Hasta</label>
+      <input type="date" name="fecha_hasta" class="form-control form-control-sm" value="{{ filtros.fecha_hasta or '' }}">
+    </div>
+  </div>
+
+  <div class="mt-2">
+    <button type="submit" class="btn btn-sm btn-primary"><i class="bi bi-funnel"></i> Filtrar</button>
+    <a href="{{ url_for('ws_incidencias.lista') }}" class="btn btn-sm btn-outline-secondary">Limpiar</a>
+  </div>
+</form>
+
+<!-- ===== Tabla de incidencias ===== -->
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>#</th>
+          <th>Descripcion</th>
+          <th>Tipo</th>
+          <th>Urgencia</th>
+          <th>Estado</th>
+          <th>Reportante</th>
+          <th>Fecha</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in incidencias %}
+        <tr>
+          <td>{{ i.id }}</td>
+          <td>
+            {% if i.es_alerta_rapida %}<span class="badge bg-danger">Alerta rapida</span>{% endif %}
+            {{ i.descripcion | truncate(60) }}
+          </td>
+          <td>{{ i.categoria or '-' }}</td>
+          <td>{{ i.urgencia or '-' }}</td>
+          <td><span class="badge bg-info text-dark">{{ i.estado }}</span></td>
+          <td>{{ i.reportante }}</td>
+          <td>{{ i.fecha.strftime('%d/%m/%Y %H:%M') if i.fecha else '-' }}</td>
+          <td>
+            <a href="{{ url_for('ws_incidencias.detalle', id_incidencia=i.id) }}" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-eye"></i> Ver
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-center text-muted py-4">No hay incidencias con esos filtros.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
