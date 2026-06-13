@@ -36,6 +36,16 @@ class Config:
     # En MySQL local (XAMPP) o en la red interna de Railway debe quedar en false.
     DB_SSL = _as_bool(os.environ.get('DB_SSL', 'false'))
 
-    # Clave secreta usada por Flask para FIRMAR la cookie de sesion del login web.
+    # Clave secreta usada por Flask para FIRMAR la cookie de sesion del login web
+    # y tambien para firmar los tokens JWT de la API movil.
     # En produccion conviene cambiarla por una variable de entorno propia.
     SECRET_KEY = os.environ.get('SECRET_KEY', 'ALERTAU2026$$**campus')
+
+    # --- Correo (SMTP) para la recuperacion de contrasena (req. movil #3) ---
+    # Se definen como variables de entorno (en Railway o en .env). Si no se
+    # configuran, la API igual genera el codigo pero no envia el correo.
+    SMTP_HOST = os.environ.get('SMTP_HOST', '')                 # ej. smtp.gmail.com
+    SMTP_PORT = int(os.environ.get('SMTP_PORT', 587))           # 587 = TLS
+    SMTP_USER = os.environ.get('SMTP_USER', '')                 # tu correo
+    SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')         # contrasena de aplicacion
+    SMTP_FROM = os.environ.get('SMTP_FROM', '') or SMTP_USER    # remitente mostrado

@@ -202,6 +202,87 @@ class Incidencia:
             cursor.close()
             con.close()
 
+    # ------------------------------------------------------------
+    #  API MOVIL: registrar una incidencia (req. movil #4)
+    # ------------------------------------------------------------
+    def registrar_movil(self, descripcion, categoria_nombre, urgencia_nombre,
+                        latitud, longitud, id_usuario, id_ubicacion, fecha=None):
+        """
+        Registra una incidencia enviada desde la app movil.
+        La app manda la categoria y la urgencia por NOMBRE, asi que aqui las
+        convertimos a su id buscando en los catalogos. El estado inicial es
+        'Registrado' (id 1) y se deja la primera huella en la linea de tiempo.
+        Devuelve (True, dict_incidencia) o (False, mensaje_error).
+        """
+        con = Conexion().open
+        cursor = con.cursor()
+        try:
+            # Resolver el id de la categoria a partir de su nombre.
+            id_categoria = None
+            if categoria_nombre:
+                cursor.execute("SELECT id FROM categoria WHERE nombre = %s", [categoria_nombre])
+                fila = cursor.fetchone()
+                id_categoria = fila['id'] if fila else None
+
+            # Resolver el id de la urgencia a partir de su nombre.
+            id_urgencia = None
+            if urgencia_nombre:
+                cursor.execute("SELECT id FROM urgencia WHERE nombre = %s", [urgencia_nombre])
+                fila = cursor.fetchone()
+                id_urgencia = fila['id'] if fila else None
+
+            # id_ubicacion 0 (o vacio) se guarda como NULL.
+            ubicacion = id_ubicacion if id_ubicacion else None
+
+            # Insertar la incidencia con estado inicial 'Registrado' (id 1).
+            # Si la app manda fecha la usamos; si no, la pone la BD (NOW()).
+            if fecha:
+                cursor.execute(
+                    """INSERT INTO incidencia
+                       (descripcion, id_categoria, id_urgencia, id_estado, id_usuario, id_ubicacion, latitud, longitud, fecha)
+                       VALUES (%s, %s, %s, 1, %s, %s, %s, %s, %s)""",
+                    [descripcion, id_categoria, id_urgencia, id_usuario, ubicacion, latitud, longitud, fecha]
+                )
+            else:
+                cursor.execute(
+                    """INSERT INTO incidencia
+                       (descripcion, id_categoria, id_urgencia, id_estado, id_usuario, id_ubicacion, latitud, longitud)
+                       VALUES (%s, %s, %s, 1, %s, %s, %s, %s)""",
+                    [descripcion, id_categoria, id_urgencia, id_usuario, ubicacion, latitud, longitud]
+                )
+            nuevo_id = cursor.lastrowid
+
+            # Primera huella en la linea de tiempo (trazabilidad).
+            cursor.execute(
+                """INSERT INTO estado_incidencia (id_incidencia, id_estado, id_usuario, comentario)
+                   VALUES (%s, 1, %s, %s)""",
+                [nuevo_id, id_usuario, 'Incidencia registrada desde la app movil']
+            )
+
+            con.commit()
+
+            # Devolver la incidencia creada con los nombres de campo que espera
+            # el modelo Incidencia de la app (categoria=id, urgencia=nombre, estado=id).
+            incidencia_creada = {
+                'id': nuevo_id,
+                'descripcion': descripcion,
+                'categoria': id_categoria,
+                'urgencia': urgencia_nombre,
+                'estado': 1,
+                'latitud': latitud,
+                'longitud': longitud,
+                'id_usuario': id_usuario,
+                'id_ubicacion': ubicacion or 0,
+                'fecha': fecha or ''
+            }
+            return True, incidencia_creada
+        except Exception as e:
+            con.rollback()
+            return False, str(e)
+        finally:
+            cursor.close()
+            con.close()
+
     def derivar(self, incidencia_id, id_area, id_usuario, comentario=None):
         """
         Deriva la incidencia a un area responsable. Esto:

@@ -6,5 +6,6 @@ Flask==3.0.3            # Framework web (rutas, plantillas Jinja2, sesiones)
 PyMySQL==1.1.1          # Driver MySQL en Python puro (no requiere compilador en Windows).
                         # Se registra como 'MySQLdb' en conexionBD.py para no cambiar el codigo.
 argon2-cffi==25.1.0     # Hash seguro de contrasenas (argon2)
+PyJWT==2.9.0            # Tokens JWT para la API REST que consume la app movil
 python-dotenv==1.0.1    # Cargar variables de entorno desde .env en local
 gunicorn==23.0.0        # Servidor WSGI para produccion (Railway / Render)

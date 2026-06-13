@@ -11,12 +11,13 @@ from conexionBD import Conexion
 class Catalogo:
 
     def categorias(self):
-        """Lista de categorias (emergencia medica, seguridad, etc.)."""
-        return self._listar_simple("SELECT id, nombre FROM categoria WHERE estado = 1 ORDER BY id")
+        """Lista de categorias (emergencia medica, seguridad, etc.).
+        Incluye 'estado' porque la app movil lo espera en su modelo Categoria."""
+        return self._listar_simple("SELECT id, nombre, estado FROM categoria WHERE estado = 1 ORDER BY id")
 
     def urgencias(self):
         """Lista de niveles de urgencia (baja, media, alta, critica)."""
-        return self._listar_simple("SELECT id, nombre FROM urgencia WHERE estado = 1 ORDER BY id")
+        return self._listar_simple("SELECT id, nombre, estado FROM urgencia WHERE estado = 1 ORDER BY id")
 
     def estados(self):
         """Lista de estados del flujo (registrado, en revision, ...)."""
@@ -25,6 +26,10 @@ class Catalogo:
     def areas(self):
         """Lista de areas responsables a las que se deriva una incidencia."""
         return self._listar_simple("SELECT id, nombre FROM area WHERE estado = 1 ORDER BY id")
+
+    def tipos_usuario(self):
+        """Lista de tipos/roles de usuario (para el combo de registro en la app movil)."""
+        return self._listar_simple("SELECT id, nombre, estado FROM tipo_usuario WHERE estado = 1 ORDER BY id")
 
     def _listar_simple(self, sql):
         """Metodo interno reutilizable: ejecuta un SELECT y devuelve todas las filas."""

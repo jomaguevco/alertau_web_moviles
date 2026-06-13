@@ -6,7 +6,10 @@
 #   - listar()         : listado para la pantalla "Gestion de usuarios"
 #   - cambiar_estado() : dar de alta/baja (validar) un usuario
 # ============================================================
+import secrets
+from datetime import datetime, timedelta
 from conexionBD import Conexion
+from tools.security import hash_password
 
 
 class Usuario:
@@ -29,6 +32,9 @@ class Usuario:
                 u.nombres,
                 u.apellidos,
                 u.correo_institucional,
+                u.dni,
+                u.telefono,
+                u.imagen,
                 u.contrasenia,
                 u.id_tipo_usuario,
                 t.nombre            AS rol,
@@ -84,3 +90,79 @@ class Usuario:
         cursor.close()
         con.close()
         return True
+
+    # ------------------------------------------------------------
+    #  API MOVIL: registro de usuario (req. movil #1)
+    # ------------------------------------------------------------
+    def registrar(self, nombres, apellidos, correo, dni, telefono, tipo_usuario, contrasenia):
+        """
+        Registra un nuevo usuario desde la app movil.
+        Devuelve (True, id_nuevo) si se creo, o (False, mensaje_error) si no.
+        La contrasena se guarda hasheada con argon2.
+        """
+        con = Conexion().open
+        cursor = con.cursor()
+        try:
+            # No permitir correos ni DNIs duplicados (son UNIQUE en la BD).
+            cursor.execute("SELECT id FROM usuario WHERE correo_institucional = %s", [correo])
+            if cursor.fetchone():
+                return False, "El correo ya esta registrado"
+
+            cursor.execute("SELECT id FROM usuario WHERE dni = %s", [dni])
+            if cursor.fetchone():
+                return False, "El DNI ya esta registrado"
+
+            cursor.execute(
+                """INSERT INTO usuario
+                   (nombres, apellidos, correo_institucional, dni, telefono, id_tipo_usuario, contrasenia, estado)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, 1)""",
+                [nombres, apellidos, correo, dni, telefono, tipo_usuario, hash_password(contrasenia)]
+            )
+            nuevo_id = cursor.lastrowid
+            con.commit()
+            return True, nuevo_id
+        except Exception as e:
+            con.rollback()
+            return False, str(e)
+        finally:
+            cursor.close()
+            con.close()
+
+    # ------------------------------------------------------------
+    #  API MOVIL: recuperacion de contrasena (req. movil #3)
+    # ------------------------------------------------------------
+    def crear_codigo_recuperacion(self, correo, minutos_validez=15):
+        """
+        Genera un codigo de recuperacion para el correo dado y lo guarda en la
+        tabla recuperacion_contrasenia. Devuelve (correo, nombres, codigo) si el
+        usuario existe, o None si el correo no esta registrado.
+        El envio del correo lo hace la ruta (tools/email_util.py).
+        """
+        con = Conexion().open
+        cursor = con.cursor()
+        try:
+            cursor.execute(
+                "SELECT id, nombres FROM usuario WHERE correo_institucional = %s",
+                [correo]
+            )
+            usuario = cursor.fetchone()
+            if not usuario:
+                return None
+
+            # Codigo de 6 digitos (secrets = aleatorio seguro).
+            codigo = f"{secrets.randbelow(1000000):06d}"
+            expira = datetime.now() + timedelta(minutes=minutos_validez)
+
+            cursor.execute(
+                """INSERT INTO recuperacion_contrasenia (id_usuario, codigo, expira_en)
+                   VALUES (%s, %s, %s)""",
+                [usuario['id'], codigo, expira.strftime('%Y-%m-%d %H:%M:%S')]
+            )
+            con.commit()
+            return {'correo': correo, 'nombres': usuario['nombres'], 'codigo': codigo}
+        except Exception as e:
+            con.rollback()
+            raise e
+        finally:
+            cursor.close()
+            con.close()

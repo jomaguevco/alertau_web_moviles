@@ -26,6 +26,7 @@ from routes.auth import ws_auth
 from routes.dashboard import ws_dashboard
 from routes.incidencias import ws_incidencias
 from routes.usuarios import ws_usuarios
+from routes.api import ws_api
 from config import Config
 
 app = Flask(__name__)
@@ -39,6 +40,10 @@ app.register_blueprint(ws_auth)
 app.register_blueprint(ws_dashboard)
 app.register_blueprint(ws_incidencias)
 app.register_blueprint(ws_usuarios)
+
+# API REST JSON para la app movil (bajo el prefijo /api). El panel web sigue
+# usando las rutas de arriba con sesion; esta capa usa JWT y devuelve JSON.
+app.register_blueprint(ws_api, url_prefix='/api')
 
 
 # Pagina raiz: redirige al login (o al panel si ya hay sesion, lo decide /login).
