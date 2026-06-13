@@ -1,0 +1,4 @@
+# Dependencias del sistema necesarias para que pip pueda compilar mysqlclient (MySQLdb).
+# Sin esto el build en Railway falla con errores de "mysql_config not found" o "pkg-config".
+[phases.setup]
+aptPkgs = ["default-libmysqlclient-dev", "build-essential", "pkg-config"]

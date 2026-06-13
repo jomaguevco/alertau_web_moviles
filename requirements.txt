@@ -1,0 +1,8 @@
+Flask==2.3.2
+argon2-cffi==21.3.0
+PyJWT==2.8.0
+Werkzeug==2.3.6
+mysql-connector-python==8.0.33
+mysqlclient
+python-dotenv
+gunicorn==21.2.0
