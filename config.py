@@ -41,6 +41,11 @@ class Config:
     # En produccion conviene cambiarla por una variable de entorno propia.
     SECRET_KEY = os.environ.get('SECRET_KEY', 'ALERTAU2026$$**campus')
 
+    # Carpeta donde se guardan las imagenes subidas (evidencias y fotos de perfil).
+    # En Railway se apunta a un VOLUMEN persistente con la variable UPLOAD_DIR
+    # (ej. /data/uploads) para que las fotos no se borren en cada redeploy.
+    UPLOAD_DIR = os.environ.get('UPLOAD_DIR', 'uploads')
+
     # --- Correo (SMTP) para la recuperacion de contrasena (req. movil #3) ---
     # Se definen como variables de entorno (en Railway o en .env). Si no se
     # configuran, la API igual genera el codigo pero no envia el correo.

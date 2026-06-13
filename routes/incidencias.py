@@ -11,19 +11,24 @@
 import os
 from flask import (Blueprint, render_template, request, redirect, url_for,
                    session, flash, send_from_directory, Response)
+from config import Config
 from models.incidencia import Incidencia
 from models.catalogo import Catalogo
 from models.mensaje import Mensaje
+from models.usuario import Usuario
 from tools.auth_required import login_requerido
+from tools.notificar import notificar_usuario
 
 ws_incidencias = Blueprint('ws_incidencias', __name__)
 
 incidencia = Incidencia()
 catalogo = Catalogo()
 mensaje = Mensaje()
+usuario = Usuario()
 
-# Carpeta donde se guardan/leen las imagenes de evidencia.
-CARPETA_EVIDENCIAS = 'uploads/evidencias'
+# Carpeta donde se guardan/leen las imagenes de evidencia (misma que usa la API
+# movil, configurable por UPLOAD_DIR para el volumen persistente de Railway).
+CARPETA_EVIDENCIAS = os.path.join(Config.UPLOAD_DIR, 'evidencias')
 
 
 # ----------------------------------------------------------
@@ -95,6 +100,13 @@ def cambiar_estado(id_incidencia):
 
     # session['usuario_id'] = quien hace el cambio (trazabilidad).
     incidencia.cambiar_estado(id_incidencia, id_estado, session['usuario_id'], comentario)
+
+    # Notificar al usuario que reporto la incidencia (req. #9).
+    reportante = usuario.fcm_token_de_incidencia(id_incidencia)
+    if reportante:
+        notificar_usuario(reportante['id_usuario'],
+                          f'El estado de tu incidencia #{id_incidencia} fue actualizado.')
+
     flash('Estado actualizado correctamente.', 'success')
     return redirect(url_for('ws_incidencias.detalle', id_incidencia=id_incidencia))
 
@@ -113,6 +125,13 @@ def derivar(id_incidencia):
         return redirect(url_for('ws_incidencias.detalle', id_incidencia=id_incidencia))
 
     incidencia.derivar(id_incidencia, id_area, session['usuario_id'], comentario)
+
+    # Notificar al usuario que reporto la incidencia (req. #9).
+    reportante = usuario.fcm_token_de_incidencia(id_incidencia)
+    if reportante:
+        notificar_usuario(reportante['id_usuario'],
+                          f'Tu incidencia #{id_incidencia} fue derivada a un area responsable.')
+
     flash('Incidencia derivada correctamente.', 'success')
     return redirect(url_for('ws_incidencias.detalle', id_incidencia=id_incidencia))
 

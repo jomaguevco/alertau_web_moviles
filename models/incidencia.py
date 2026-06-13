@@ -283,6 +283,152 @@ class Incidencia:
             cursor.close()
             con.close()
 
+    # ------------------------------------------------------------
+    #  API MOVIL: historial de incidencias del usuario (req. #7)
+    # ------------------------------------------------------------
+    def mis_incidencias(self, id_usuario):
+        """Lista las incidencias reportadas por un usuario (las mas nuevas primero)."""
+        con = Conexion().open
+        cursor = con.cursor()
+        sql = """
+            SELECT
+                i.id,
+                i.descripcion,
+                i.id_categoria        AS categoria,
+                COALESCE(c.nombre, '') AS categoria_nombre,
+                COALESCE(ur.nombre, '') AS urgencia,
+                i.id_estado           AS estado,
+                e.nombre              AS estado_nombre,
+                COALESCE(i.latitud, 0)  AS latitud,
+                COALESCE(i.longitud, 0) AS longitud,
+                i.id_usuario,
+                COALESCE(i.id_ubicacion, 0) AS id_ubicacion,
+                i.fecha
+            FROM incidencia i
+            LEFT JOIN categoria c ON i.id_categoria = c.id
+            LEFT JOIN urgencia ur ON i.id_urgencia = ur.id
+            INNER JOIN estado e   ON i.id_estado = e.id
+            WHERE i.id_usuario = %s
+            ORDER BY i.fecha DESC, i.id DESC
+        """
+        cursor.execute(sql, [id_usuario])
+        resultado = cursor.fetchall()
+        cursor.close()
+        con.close()
+        return resultado
+
+    # ------------------------------------------------------------
+    #  API MOVIL: seguimiento / linea de tiempo (req. #8)
+    # ------------------------------------------------------------
+    def seguimiento(self, id_incidencia):
+        """Devuelve la linea de tiempo (historial de estados) de una incidencia."""
+        con = Conexion().open
+        cursor = con.cursor()
+        sql = """
+            SELECT
+                h.id,
+                h.id_incidencia,
+                COALESCE(h.id_area, 0) AS id_area,
+                h.id_estado            AS estado,
+                e.nombre               AS estado_nombre,
+                COALESCE(a.nombre, '') AS area_nombre,
+                COALESCE(h.comentario, '') AS comentario,
+                h.fecha
+            FROM estado_incidencia h
+            INNER JOIN estado e ON h.id_estado = e.id
+            LEFT JOIN area a    ON h.id_area = a.id
+            WHERE h.id_incidencia = %s
+            ORDER BY h.fecha ASC, h.id ASC
+        """
+        cursor.execute(sql, [id_incidencia])
+        resultado = cursor.fetchall()
+        cursor.close()
+        con.close()
+        return resultado
+
+    # ------------------------------------------------------------
+    #  API MOVIL: reapertura de incidencia (req. #15)
+    # ------------------------------------------------------------
+    def reabrir(self, id_incidencia, id_usuario, motivo):
+        """Reabre una incidencia (estado 'Reabierto' = 8) dejando el motivo en el historial."""
+        con = Conexion().open
+        cursor = con.cursor()
+        try:
+            cursor.execute("UPDATE incidencia SET id_estado = 8 WHERE id = %s", [id_incidencia])
+            cursor.execute(
+                """INSERT INTO estado_incidencia (id_incidencia, id_estado, id_usuario, comentario)
+                   VALUES (%s, 8, %s, %s)""",
+                [id_incidencia, id_usuario, motivo]
+            )
+            con.commit()
+            return True
+        except Exception as e:
+            con.rollback()
+            raise e
+        finally:
+            cursor.close()
+            con.close()
+
+    # ------------------------------------------------------------
+    #  API MOVIL: boton de alerta rapida (req. #13)
+    # ------------------------------------------------------------
+    def alerta_rapida(self, id_usuario, latitud, longitud, descripcion=None):
+        """
+        Crea una incidencia critica de forma inmediata (boton de panico):
+        categoria 'Emergencia medica' (1), urgencia 'Critica' (4), es_alerta_rapida=1.
+        """
+        con = Conexion().open
+        cursor = con.cursor()
+        try:
+            texto = descripcion or 'Alerta rapida (emergencia)'
+            cursor.execute(
+                """INSERT INTO incidencia
+                   (descripcion, id_categoria, id_urgencia, id_estado, id_usuario, latitud, longitud, es_alerta_rapida)
+                   VALUES (%s, 1, 4, 1, %s, %s, %s, 1)""",
+                [texto, id_usuario, latitud, longitud]
+            )
+            nuevo_id = cursor.lastrowid
+            cursor.execute(
+                """INSERT INTO estado_incidencia (id_incidencia, id_estado, id_usuario, comentario)
+                   VALUES (%s, 1, %s, %s)""",
+                [nuevo_id, id_usuario, 'Alerta rapida registrada']
+            )
+            con.commit()
+            return True, nuevo_id
+        except Exception as e:
+            con.rollback()
+            return False, str(e)
+        finally:
+            cursor.close()
+            con.close()
+
+    # ------------------------------------------------------------
+    #  API MOVIL: incidencias geolocalizadas para el mapa (req. #6)
+    # ------------------------------------------------------------
+    def incidencias_mapa(self):
+        """Lista las incidencias que tienen coordenadas, para mostrarlas en el mapa."""
+        con = Conexion().open
+        cursor = con.cursor()
+        sql = """
+            SELECT
+                i.id,
+                i.descripcion,
+                COALESCE(i.latitud, 0)  AS latitud,
+                COALESCE(i.longitud, 0) AS longitud,
+                e.nombre AS estado_nombre,
+                COALESCE(c.nombre, '') AS categoria_nombre
+            FROM incidencia i
+            INNER JOIN estado e ON i.id_estado = e.id
+            LEFT JOIN categoria c ON i.id_categoria = c.id
+            WHERE i.latitud IS NOT NULL AND i.longitud IS NOT NULL
+            ORDER BY i.fecha DESC
+        """
+        cursor.execute(sql)
+        resultado = cursor.fetchall()
+        cursor.close()
+        con.close()
+        return resultado
+
     def derivar(self, incidencia_id, id_area, id_usuario, comentario=None):
         """
         Deriva la incidencia a un area responsable. Esto:

@@ -33,6 +33,20 @@ class Mensaje:
         con.close()
         return resultado
 
+    def listar_movil(self, incidencia_id):
+        """Lista los mensajes con los campos que espera el modelo Mensaje de la app."""
+        con = Conexion().open
+        cursor = con.cursor()
+        cursor.execute(
+            """SELECT id, id_incidencia, id_usuario, mensaje, fecha
+               FROM mensaje WHERE id_incidencia = %s ORDER BY fecha ASC, id ASC""",
+            [incidencia_id]
+        )
+        resultado = cursor.fetchall()
+        cursor.close()
+        con.close()
+        return resultado
+
     def enviar(self, incidencia_id, id_usuario, texto):
         """Guarda un nuevo mensaje de texto en el chat de la incidencia."""
         con = Conexion().open

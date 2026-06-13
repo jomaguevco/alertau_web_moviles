@@ -31,6 +31,12 @@ class Catalogo:
         """Lista de tipos/roles de usuario (para el combo de registro en la app movil)."""
         return self._listar_simple("SELECT id, nombre, estado FROM tipo_usuario WHERE estado = 1 ORDER BY id")
 
+    def ubicaciones(self):
+        """Ubicaciones del campus (con QR), zonas de atencion y puntos de apoyo (req. #6)."""
+        return self._listar_simple(
+            "SELECT id, nombre, tipo, codigo_qr, latitud, longitud FROM ubicacion WHERE estado = 1 ORDER BY id"
+        )
+
     def _listar_simple(self, sql):
         """Metodo interno reutilizable: ejecuta un SELECT y devuelve todas las filas."""
         con = Conexion().open

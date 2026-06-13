@@ -129,6 +129,79 @@ class Usuario:
             con.close()
 
     # ------------------------------------------------------------
+    #  API MOVIL: perfil del usuario (req. movil #12)
+    # ------------------------------------------------------------
+    def obtener_perfil(self, usuario_id):
+        """Devuelve los datos de perfil de un usuario (para ver/editar en la app)."""
+        con = Conexion().open
+        cursor = con.cursor()
+        cursor.execute(
+            """SELECT
+                   id, nombres, apellidos, correo_institucional, dni, telefono,
+                   id_tipo_usuario AS tipo_usuario, imagen, estado,
+                   COALESCE(contacto_emergencia_nombre, '')   AS contacto_emergencia_nombre,
+                   COALESCE(contacto_emergencia_telefono, '') AS contacto_emergencia_telefono
+               FROM usuario WHERE id = %s""",
+            [usuario_id]
+        )
+        resultado = cursor.fetchone()
+        cursor.close()
+        con.close()
+        return resultado
+
+    def actualizar_perfil(self, usuario_id, nombres, apellidos, telefono,
+                          contacto_nombre, contacto_telefono):
+        """Actualiza los datos editables del perfil (req. #12)."""
+        con = Conexion().open
+        cursor = con.cursor()
+        cursor.execute(
+            """UPDATE usuario
+               SET nombres = %s, apellidos = %s, telefono = %s,
+                   contacto_emergencia_nombre = %s, contacto_emergencia_telefono = %s
+               WHERE id = %s""",
+            [nombres, apellidos, telefono, contacto_nombre, contacto_telefono, usuario_id]
+        )
+        con.commit()
+        cursor.close()
+        con.close()
+        return True
+
+    def actualizar_foto(self, usuario_id, nombre_archivo):
+        """Guarda el nombre del archivo de la foto de perfil."""
+        con = Conexion().open
+        cursor = con.cursor()
+        cursor.execute("UPDATE usuario SET imagen = %s WHERE id = %s", [nombre_archivo, usuario_id])
+        con.commit()
+        cursor.close()
+        con.close()
+        return True
+
+    def guardar_fcm_token(self, usuario_id, token):
+        """Guarda el token de Firebase del dispositivo para enviar notificaciones push (req. #9)."""
+        con = Conexion().open
+        cursor = con.cursor()
+        cursor.execute("UPDATE usuario SET fcm_token = %s WHERE id = %s", [token, usuario_id])
+        con.commit()
+        cursor.close()
+        con.close()
+        return True
+
+    def fcm_token_de_incidencia(self, id_incidencia):
+        """Obtiene el fcm_token del usuario que reporto una incidencia (para enviarle push)."""
+        con = Conexion().open
+        cursor = con.cursor()
+        cursor.execute(
+            """SELECT u.id AS id_usuario, u.fcm_token
+               FROM incidencia i INNER JOIN usuario u ON i.id_usuario = u.id
+               WHERE i.id = %s""",
+            [id_incidencia]
+        )
+        resultado = cursor.fetchone()
+        cursor.close()
+        con.close()
+        return resultado
+
+    # ------------------------------------------------------------
     #  API MOVIL: recuperacion de contrasena (req. movil #3)
     # ------------------------------------------------------------
     def crear_codigo_recuperacion(self, correo, minutos_validez=15):
