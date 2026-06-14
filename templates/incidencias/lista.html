@@ -57,6 +57,11 @@
     </div>
 
     <div class="col-md-2">
+      <label class="form-label mb-0 small">Usuario</label>
+      <input type="text" name="usuario" class="form-control form-control-sm" placeholder="Nombre o correo" value="{{ filtros.usuario or '' }}">
+    </div>
+
+    <div class="col-md-2">
       <label class="form-label mb-0 small">Desde</label>
       <input type="date" name="fecha_desde" class="form-control form-control-sm" value="{{ filtros.fecha_desde or '' }}">
     </div>

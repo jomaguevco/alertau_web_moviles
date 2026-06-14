@@ -58,6 +58,11 @@ class Incidencia:
         if filtros.get('id_urgencia'):
             sql += " AND i.id_urgencia = %s"
             params.append(filtros['id_urgencia'])
+        # Filtro por usuario reportante (busqueda por nombre o correo).
+        if filtros.get('usuario'):
+            sql += " AND (CONCAT(u.nombres, ' ', u.apellidos) LIKE %s OR u.correo_institucional LIKE %s)"
+            params.append('%' + filtros['usuario'] + '%')
+            params.append('%' + filtros['usuario'] + '%')
         if filtros.get('fecha_desde'):
             sql += " AND i.fecha >= %s"
             params.append(filtros['fecha_desde'] + ' 00:00:00')

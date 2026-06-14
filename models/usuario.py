@@ -239,3 +239,45 @@ class Usuario:
         finally:
             cursor.close()
             con.close()
+
+    def cambiar_contrasenia_con_codigo(self, correo, codigo, nueva_contrasenia):
+        """
+        Valida el codigo de recuperacion y, si es correcto y no expiro, cambia la
+        contrasena del usuario. Devuelve (True, mensaje) o (False, mensaje).
+        """
+        con = Conexion().open
+        cursor = con.cursor()
+        try:
+            cursor.execute("SELECT id FROM usuario WHERE correo_institucional = %s", [correo])
+            usuario = cursor.fetchone()
+            if not usuario:
+                return False, "Correo no registrado"
+
+            # Buscar un codigo valido: no usado y no expirado.
+            cursor.execute(
+                """SELECT id FROM recuperacion_contrasenia
+                   WHERE id_usuario = %s AND codigo = %s AND usado = 0 AND expira_en > NOW()
+                   ORDER BY id DESC LIMIT 1""",
+                [usuario['id'], codigo]
+            )
+            recuperacion = cursor.fetchone()
+            if not recuperacion:
+                return False, "Codigo invalido o expirado"
+
+            # Actualizar la contrasena (hash argon2) y marcar el codigo como usado.
+            cursor.execute(
+                "UPDATE usuario SET contrasenia = %s WHERE id = %s",
+                [hash_password(nueva_contrasenia), usuario['id']]
+            )
+            cursor.execute(
+                "UPDATE recuperacion_contrasenia SET usado = 1 WHERE id = %s",
+                [recuperacion['id']]
+            )
+            con.commit()
+            return True, "Contrasena actualizada correctamente"
+        except Exception as e:
+            con.rollback()
+            return False, str(e)
+        finally:
+            cursor.close()
+            con.close()

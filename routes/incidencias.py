@@ -44,6 +44,7 @@ def lista():
         'id_categoria': request.args.get('id_categoria'),
         'id_urgencia': request.args.get('id_urgencia'),
         'id_area': request.args.get('id_area'),
+        'usuario': request.args.get('usuario'),
         'fecha_desde': request.args.get('fecha_desde'),
         'fecha_hasta': request.args.get('fecha_hasta'),
     }

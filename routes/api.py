@@ -193,6 +193,24 @@ def recuperar_contrasenia():
 
 
 # ----------------------------------------------------------
+#  POST /api/cambiarContraseniaConCodigo  -> 2do paso de recuperacion (req. #3)
+#  Recibe: { email, codigo, nueva_contrasenia }
+# ----------------------------------------------------------
+@ws_api.route('/cambiarContraseniaConCodigo', methods=['POST'])
+def cambiar_contrasenia_con_codigo():
+    data = request.get_json(silent=True) or {}
+    correo = data.get('email')
+    codigo = data.get('codigo')
+    nueva = data.get('nueva_contrasenia')
+
+    if not all([correo, codigo, nueva]):
+        return jsonify({'data': None, 'message': 'Faltan datos obligatorios', 'status': 0}), 400
+
+    exitoso, mensaje = usuario.cambiar_contrasenia_con_codigo(correo, codigo, nueva)
+    return jsonify({'data': None, 'message': mensaje, 'status': 1 if exitoso else 0}), (200 if exitoso else 400)
+
+
+# ----------------------------------------------------------
 #  GET /api/categorias  -> categorias (req. movil #5)
 # ----------------------------------------------------------
 @ws_api.route('/categorias', methods=['GET'])
