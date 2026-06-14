@@ -84,6 +84,96 @@ class Reporte:
         """
         return self._agrupado(sql)
 
+    def por_categoria_rango(self, fecha_desde=None, fecha_hasta=None):
+        """
+        Incidencias por tipo (categoria) dentro de un rango de fechas (req. web #9).
+        Si no se pasan fechas, cuenta todas.
+        """
+        con = Conexion().open
+        cursor = con.cursor()
+        sql = """
+            SELECT c.nombre AS etiqueta, COUNT(i.id) AS cantidad
+            FROM categoria c
+            LEFT JOIN incidencia i ON i.id_categoria = c.id
+        """
+        params = []
+        condiciones = []
+        if fecha_desde:
+            condiciones.append("i.fecha >= %s")
+            params.append(fecha_desde + ' 00:00:00')
+        if fecha_hasta:
+            condiciones.append("i.fecha <= %s")
+            params.append(fecha_hasta + ' 23:59:59')
+        if condiciones:
+            # El filtro va dentro del LEFT JOIN para no perder categorias con 0.
+            sql += " AND " + " AND ".join(condiciones)
+        sql += " GROUP BY c.id, c.nombre ORDER BY cantidad DESC"
+        cursor.execute(sql, params)
+        resultado = cursor.fetchall()
+        cursor.close()
+        con.close()
+        return resultado
+
+    def tiempo_promedio_por_tipo(self):
+        """
+        Tiempo promedio de atencion por tipo de caso, en horas (req. web #9).
+        Se mide desde que se registra la incidencia hasta que pasa a
+        'Resuelto' (5) o 'Cerrado' (6) por primera vez.
+        """
+        sql = """
+            SELECT
+                c.nombre AS etiqueta,
+                ROUND(AVG(TIMESTAMPDIFF(HOUR, i.fecha, h.fecha)), 1) AS horas
+            FROM incidencia i
+            INNER JOIN categoria c ON i.id_categoria = c.id
+            INNER JOIN (
+                SELECT id_incidencia, MIN(fecha) AS fecha
+                FROM estado_incidencia
+                WHERE id_estado IN (5, 6)
+                GROUP BY id_incidencia
+            ) h ON h.id_incidencia = i.id
+            GROUP BY c.id, c.nombre
+            ORDER BY horas DESC
+        """
+        return self._agrupado(sql)
+
+    def resueltas_con_calificacion(self):
+        """
+        Incidencias resueltas/cerradas con su calificacion y comentario (req. web #9).
+        """
+        sql = """
+            SELECT
+                i.id,
+                i.descripcion,
+                e.nombre AS estado,
+                cal.puntuacion,
+                cal.comentario
+            FROM calificacion cal
+            INNER JOIN incidencia i ON cal.id_incidencia = i.id
+            INNER JOIN estado e ON i.id_estado = e.id
+            ORDER BY i.id
+        """
+        return self._agrupado(sql)
+
+    def incidencias_geo(self):
+        """Incidencias con coordenadas para el reporte geografico (req. web #8)."""
+        sql = """
+            SELECT
+                i.id,
+                i.descripcion,
+                i.latitud,
+                i.longitud,
+                e.nombre AS estado,
+                COALESCE(c.nombre, 'Sin categoria') AS categoria,
+                COALESCE(ur.nombre, '-') AS urgencia
+            FROM incidencia i
+            INNER JOIN estado e ON i.id_estado = e.id
+            LEFT JOIN categoria c ON i.id_categoria = c.id
+            LEFT JOIN urgencia ur ON i.id_urgencia = ur.id
+            WHERE i.latitud IS NOT NULL AND i.longitud IS NOT NULL
+        """
+        return self._agrupado(sql)
+
     def _agrupado(self, sql):
         """Metodo interno reutilizable para las consultas de agrupacion."""
         con = Conexion().open

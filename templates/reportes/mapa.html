@@ -1,0 +1,52 @@
+<!--
+  ============================================================
+   reportes/mapa.html  -  Reporte geografico (req. web #8)
+  ------------------------------------------------------------
+   Mapa con la concentracion de incidencias por zonas del campus.
+   Usa Leaflet + OpenStreetMap (no requiere clave de API).
+  ============================================================
+-->
+{% extends 'base.html' %}
+{% block titulo %}AlertaU - Reporte geografico{% endblock %}
+
+{% block contenido %}
+<h3 class="mb-3"><i class="bi bi-geo-alt"></i> Reporte geografico de incidencias</h3>
+<p class="text-muted">Cada marcador es una incidencia reportada con ubicacion. Haz clic para ver el detalle.</p>
+
+<div id="map" style="height: 70vh; width: 100%; border-radius: 8px;"></div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Leaflet (mapa libre, sin API key) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // Datos de incidencias enviados por el servidor.
+  const incidencias = {{ incidencias | tojson }};
+
+  // Centro por defecto: campus USAT (Chiclayo).
+  const mapa = L.map('map').setView([-6.7181, -79.9075], 16);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap'
+  }).addTo(mapa);
+
+  // Agregar un marcador por cada incidencia.
+  const grupo = [];
+  incidencias.forEach(function (i) {
+    const m = L.marker([i.latitud, i.longitud]).addTo(mapa);
+    m.bindPopup(
+      '<b>#' + i.id + ' - ' + i.categoria + '</b><br>' +
+      'Estado: ' + i.estado + '<br>' +
+      'Urgencia: ' + i.urgencia + '<br>' +
+      i.descripcion
+    );
+    grupo.push([i.latitud, i.longitud]);
+  });
+
+  // Ajustar el zoom para que se vean todos los marcadores (si hay).
+  if (grupo.length > 0) {
+    mapa.fitBounds(grupo, { padding: [40, 40], maxZoom: 17 });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,104 @@
+<!--
+  ============================================================
+   reportes/reportes.html  -  Reportes administrativos (req. web #9)
+  ------------------------------------------------------------
+   - Incidencias por tipo en un rango de fechas
+   - Incidencias por nivel de urgencia
+   - Tiempo promedio de atencion por tipo de caso
+   - Incidencias resueltas con sus calificaciones y comentarios
+  ============================================================
+-->
+{% extends 'base.html' %}
+{% block titulo %}AlertaU - Reportes{% endblock %}
+
+{% block contenido %}
+<h3 class="mb-3"><i class="bi bi-bar-chart"></i> Reportes administrativos</h3>
+
+<!-- Filtro de rango de fechas -->
+<form class="card card-body shadow-sm mb-3" method="GET" action="{{ url_for('ws_reportes.reportes') }}">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label mb-0 small">Desde</label>
+      <input type="date" name="fecha_desde" class="form-control form-control-sm" value="{{ filtros.fecha_desde or '' }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label mb-0 small">Hasta</label>
+      <input type="date" name="fecha_hasta" class="form-control form-control-sm" value="{{ filtros.fecha_hasta or '' }}">
+    </div>
+    <div class="col-md-3">
+      <button class="btn btn-sm btn-primary"><i class="bi bi-funnel"></i> Aplicar</button>
+      <a href="{{ url_for('ws_reportes.reportes') }}" class="btn btn-sm btn-outline-secondary">Limpiar</a>
+    </div>
+  </div>
+</form>
+
+<div class="row g-3">
+  <!-- Incidencias por tipo (rango) -->
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white fw-bold"><i class="bi bi-tags"></i> Incidencias por tipo (rango de fechas)</div>
+      <ul class="list-group list-group-flush">
+        {% for f in por_categoria %}
+        <li class="list-group-item d-flex justify-content-between">
+          {{ f.etiqueta }} <span class="badge bg-primary rounded-pill">{{ f.cantidad }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- Por urgencia -->
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white fw-bold"><i class="bi bi-flag"></i> Incidencias por urgencia</div>
+      <ul class="list-group list-group-flush">
+        {% for f in por_urgencia %}
+        <li class="list-group-item d-flex justify-content-between">
+          {{ f.etiqueta }} <span class="badge bg-secondary rounded-pill">{{ f.cantidad }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- Tiempo promedio de atencion -->
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white fw-bold"><i class="bi bi-clock"></i> Tiempo promedio de atencion por tipo</div>
+      <ul class="list-group list-group-flush">
+        {% for f in tiempo_promedio %}
+        <li class="list-group-item d-flex justify-content-between">
+          {{ f.etiqueta }} <span class="badge bg-info text-dark rounded-pill">{{ f.horas }} h</span>
+        </li>
+        {% else %}
+        <li class="list-group-item text-muted">Aun no hay casos resueltos/cerrados.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- Resueltas con calificacion -->
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white fw-bold"><i class="bi bi-star"></i> Resueltas con calificacion</div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead class="table-light"><tr><th>#</th><th>Incidencia</th><th>Puntuacion</th><th>Comentario</th></tr></thead>
+          <tbody>
+            {% for r in resueltas %}
+            <tr>
+              <td>{{ r.id }}</td>
+              <td>{{ r.descripcion | truncate(40) }}</td>
+              <td>{{ '★' * r.puntuacion }}{{ '☆' * (5 - r.puntuacion) }}</td>
+              <td>{{ r.comentario or '-' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-muted text-center">Aun no hay calificaciones.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
