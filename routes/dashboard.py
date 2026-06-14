@@ -22,6 +22,7 @@ def dashboard():
     por_categoria = reporte.por_categoria()
     por_urgencia = reporte.por_urgencia()
     por_estado = reporte.por_estado()
+    tiempo_promedio = reporte.tiempo_promedio_general()   # req. #10
 
     return render_template(
         'dashboard.html',
@@ -29,4 +30,5 @@ def dashboard():
         por_categoria=por_categoria,
         por_urgencia=por_urgencia,
         por_estado=por_estado,
+        tiempo_promedio=tiempo_promedio,
     )

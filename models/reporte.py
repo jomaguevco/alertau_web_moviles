@@ -51,6 +51,29 @@ class Reporte:
             'pct_cerradas': pct_cerradas,
         }
 
+    def tiempo_promedio_general(self):
+        """
+        Tiempo promedio de respuesta (horas) en general, para el panel resumen (req. #10).
+        Desde que se registra la incidencia hasta su primer 'Resuelto'/'Cerrado'.
+        Devuelve 0 si aun no hay casos resueltos.
+        """
+        con = Conexion().open
+        cursor = con.cursor()
+        cursor.execute("""
+            SELECT ROUND(AVG(TIMESTAMPDIFF(HOUR, i.fecha, h.fecha)), 1) AS horas
+            FROM incidencia i
+            INNER JOIN (
+                SELECT id_incidencia, MIN(fecha) AS fecha
+                FROM estado_incidencia
+                WHERE id_estado IN (5, 6)
+                GROUP BY id_incidencia
+            ) h ON h.id_incidencia = i.id
+        """)
+        fila = cursor.fetchone()
+        cursor.close()
+        con.close()
+        return (fila['horas'] if fila and fila['horas'] is not None else 0)
+
     def por_categoria(self):
         """Cantidad de incidencias agrupadas por categoria (tipo)."""
         sql = """

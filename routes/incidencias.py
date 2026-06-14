@@ -149,6 +149,13 @@ def enviar_mensaje(id_incidencia):
         return redirect(url_for('ws_incidencias.detalle', id_incidencia=id_incidencia))
 
     mensaje.enviar(id_incidencia, session['usuario_id'], texto)
+
+    # Notificar al usuario que reporto: el personal le escribio / solicita info (req. #9).
+    reportante = usuario.fcm_token_de_incidencia(id_incidencia)
+    if reportante and reportante['id_usuario'] != session['usuario_id']:
+        notificar_usuario(reportante['id_usuario'],
+                          f'El personal te escribio sobre tu incidencia #{id_incidencia}.')
+
     flash('Mensaje enviado.', 'success')
     return redirect(url_for('ws_incidencias.detalle', id_incidencia=id_incidencia))
 
