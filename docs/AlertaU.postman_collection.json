@@ -4,6 +4,10 @@
     "description": "Coleccion de la API de AlertaU (gestion de incidencias en campus). Todas las respuestas tienen la forma {data, message, status}. El login guarda el access_token (JWT) en la variable de coleccion {{token}} automaticamente.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
   "variable": [
     { "key": "base_url", "value": "https://alertau-web-production.up.railway.app/api" },
     { "key": "token", "value": "" },
@@ -56,6 +60,27 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": { "mode": "raw", "raw": "{\n  \"email\": \"ana.torres@usat.edu.pe\"\n}" },
             "url": { "raw": "{{base_url}}/recuperarContraseniaUsuario", "host": ["{{base_url}}"], "path": ["recuperarContraseniaUsuario"] }
+          }
+        },
+        {
+          "name": "Cambiar contrasena con codigo",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"ana.torres@usat.edu.pe\",\n  \"codigo\": \"123456\",\n  \"nueva_contrasenia\": \"nueva123\"\n}" },
+            "url": { "raw": "{{base_url}}/cambiarContraseniaConCodigo", "host": ["{{base_url}}"], "path": ["cambiarContraseniaConCodigo"] }
+          }
+        },
+        {
+          "name": "Subir foto de perfil (multipart)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": { "mode": "formdata", "formdata": [
+              { "key": "id_usuario", "value": "{{id_usuario}}", "type": "text" },
+              { "key": "imagen", "type": "file", "src": [] }
+            ]},
+            "url": { "raw": "{{base_url}}/perfil/foto", "host": ["{{base_url}}"], "path": ["perfil", "foto"] }
           }
         },
         {

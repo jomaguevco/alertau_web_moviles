@@ -26,11 +26,43 @@ from models.calificacion import Calificacion
 from models.mensaje import Mensaje
 from models.evidencia import Evidencia
 from tools.security import verificar_password
-from tools.jwt_utils import generar_token
+from tools.jwt_utils import generar_token, verificar_token
 from tools.email_util import enviar_correo
 from tools.notificar import notificar_usuario
 
 ws_api = Blueprint('ws_api', __name__)
+
+# Endpoints PUBLICOS (no requieren token, porque ocurren antes de iniciar sesion).
+_ENDPOINTS_PUBLICOS = {
+    'auth_usuario', 'listar_tipos_usuario', 'registrar_usuario',
+    'recuperar_contrasenia', 'cambiar_contrasenia_con_codigo',
+}
+
+
+@ws_api.before_request
+def _proteger_con_jwt():
+    """
+    Verifica el token JWT en TODAS las rutas de la API, salvo las publicas.
+    Asi la API movil queda realmente protegida (req. 5.4). El token lo envia
+    la app en la cabecera 'Authorization: Bearer <token>'.
+    """
+    # El nombre del endpoint viene como 'ws_api.<funcion>'.
+    endpoint = (request.endpoint or '').split('.')[-1]
+    if endpoint in _ENDPOINTS_PUBLICOS:
+        return  # ruta publica, no se exige token
+
+    cabecera = request.headers.get('Authorization', '')
+    partes = cabecera.split('Bearer ')
+    token = partes[1].strip() if len(partes) > 1 else None
+    if not token:
+        return jsonify({'data': None, 'message': 'Token requerido', 'status': 0}), 401
+
+    payload = verificar_token(token)
+    if not payload:
+        return jsonify({'data': None, 'message': 'Token invalido o expirado', 'status': 0}), 401
+
+    # Guardar el usuario autenticado por si la ruta lo necesita.
+    request.usuario_id = payload.get('usuario_id')
 
 usuario = Usuario()
 incidencia = Incidencia()
@@ -96,8 +128,8 @@ def auth_usuario():
         'imagen': fila['imagen'],
     }
 
-    # Generar el token JWT (vive 1 hora) con el id del usuario.
-    token = generar_token({'usuario_id': fila['usuario_id']}, 60 * 60)
+    # Generar el token JWT (vive 12 horas) con el id del usuario.
+    token = generar_token({'usuario_id': fila['usuario_id']}, 60 * 60 * 12)
 
     return jsonify({
         'data': usuario_data,

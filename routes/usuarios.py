@@ -6,18 +6,43 @@
 # ============================================================
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from models.usuario import Usuario
+from models.catalogo import Catalogo
 from tools.auth_required import login_requerido
 
 ws_usuarios = Blueprint('ws_usuarios', __name__)
 
 usuario = Usuario()
+catalogo = Catalogo()
 
 
 @ws_usuarios.route('/usuarios')
 @login_requerido
 def lista():
-    """Lista todos los usuarios del sistema."""
-    return render_template('usuarios/lista.html', usuarios=usuario.listar())
+    """Lista todos los usuarios del sistema y permite dar de alta uno nuevo."""
+    return render_template('usuarios/lista.html',
+                           usuarios=usuario.listar(),
+                           tipos=catalogo.tipos_usuario())
+
+
+@ws_usuarios.route('/usuarios/nuevo', methods=['POST'])
+@login_requerido
+def nuevo():
+    """Alta de un usuario desde el panel web (req. #6)."""
+    f = request.form
+    if not all([f.get('nombres'), f.get('apellidos'), f.get('correo'),
+                f.get('dni'), f.get('tipo_usuario'), f.get('contrasenia')]):
+        flash('Completa todos los campos obligatorios.', 'danger')
+        return redirect(url_for('ws_usuarios.lista'))
+
+    exitoso, resultado = usuario.registrar(
+        f.get('nombres'), f.get('apellidos'), f.get('correo'), f.get('dni'),
+        f.get('telefono'), f.get('tipo_usuario'), f.get('contrasenia')
+    )
+    if exitoso:
+        flash('Usuario creado correctamente.', 'success')
+    else:
+        flash('No se pudo crear: ' + str(resultado), 'danger')
+    return redirect(url_for('ws_usuarios.lista'))
 
 
 @ws_usuarios.route('/usuarios/<int:id_usuario>/estado', methods=['POST'])

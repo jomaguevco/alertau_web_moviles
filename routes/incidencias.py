@@ -102,11 +102,14 @@ def cambiar_estado(id_incidencia):
     # session['usuario_id'] = quien hace el cambio (trazabilidad).
     incidencia.cambiar_estado(id_incidencia, id_estado, session['usuario_id'], comentario)
 
-    # Notificar al usuario que reporto la incidencia (req. #9).
+    # Notificar al usuario que reporto la incidencia, nombrando el nuevo estado
+    # (asi "Cerrado", "En atencion", etc. llegan como eventos distintos, req. #9).
+    nombres_estado = {str(e['id']): e['nombre'] for e in catalogo.estados()}
+    nombre_estado = nombres_estado.get(str(id_estado), '')
     reportante = usuario.fcm_token_de_incidencia(id_incidencia)
     if reportante:
         notificar_usuario(reportante['id_usuario'],
-                          f'El estado de tu incidencia #{id_incidencia} fue actualizado.')
+                          f'Tu incidencia #{id_incidencia} cambio a estado: {nombre_estado}.')
 
     flash('Estado actualizado correctamente.', 'success')
     return redirect(url_for('ws_incidencias.detalle', id_incidencia=id_incidencia))
