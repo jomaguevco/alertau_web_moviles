@@ -1,0 +1,187 @@
+{
+  "info": {
+    "name": "AlertaU - API REST",
+    "description": "Coleccion de la API de AlertaU (gestion de incidencias en campus). Todas las respuestas tienen la forma {data, message, status}. El login guarda el access_token (JWT) en la variable de coleccion {{token}} automaticamente.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "https://alertau-web-production.up.railway.app/api" },
+    { "key": "token", "value": "" },
+    { "key": "id_usuario", "value": "3" },
+    { "key": "id_incidencia", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "Autenticacion y usuarios",
+      "item": [
+        {
+          "name": "Login (auth/usuario)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var j = pm.response.json();",
+                  "if (j.access_token) { pm.collectionVariables.set('token', j.access_token); }",
+                  "if (j.data && j.data.id) { pm.collectionVariables.set('id_usuario', j.data.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"correo_institucional\": \"ana.torres@usat.edu.pe\",\n  \"contrasenia\": \"usat\"\n}" },
+            "url": { "raw": "{{base_url}}/auth/usuario", "host": ["{{base_url}}"], "path": ["auth", "usuario"] }
+          }
+        },
+        {
+          "name": "Listar tipos de usuario",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/listarTiposUsuario", "host": ["{{base_url}}"], "path": ["listarTiposUsuario"] } }
+        },
+        {
+          "name": "Registrar usuario",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nombres\": \"Nuevo\",\n  \"apellidos\": \"Estudiante\",\n  \"correo_institucional\": \"nuevo@usat.edu.pe\",\n  \"dni\": \"71234567\",\n  \"telefono\": \"987654321\",\n  \"tipo_usuario\": 1,\n  \"contrasenia\": \"1234\"\n}" },
+            "url": { "raw": "{{base_url}}/registrarUsuario", "host": ["{{base_url}}"], "path": ["registrarUsuario"] }
+          }
+        },
+        {
+          "name": "Recuperar contrasena",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"ana.torres@usat.edu.pe\"\n}" },
+            "url": { "raw": "{{base_url}}/recuperarContraseniaUsuario", "host": ["{{base_url}}"], "path": ["recuperarContraseniaUsuario"] }
+          }
+        },
+        {
+          "name": "Perfil (obtener)",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": { "raw": "{{base_url}}/perfil/{{id_usuario}}", "host": ["{{base_url}}"], "path": ["perfil", "{{id_usuario}}"] } }
+        },
+        {
+          "name": "Actualizar perfil",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"id\": {{id_usuario}},\n  \"nombres\": \"Ana\",\n  \"apellidos\": \"Torres Lopez\",\n  \"telefono\": \"987333444\",\n  \"contacto_emergencia_nombre\": \"Maria\",\n  \"contacto_emergencia_telefono\": \"999888777\"\n}" },
+            "url": { "raw": "{{base_url}}/actualizarPerfil", "host": ["{{base_url}}"], "path": ["actualizarPerfil"] }
+          }
+        },
+        {
+          "name": "Registrar token FCM",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"id_usuario\": {{id_usuario}},\n  \"fcm_token\": \"token-de-prueba\"\n}" },
+            "url": { "raw": "{{base_url}}/registrarTokenFCM", "host": ["{{base_url}}"], "path": ["registrarTokenFCM"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Catalogos",
+      "item": [
+        { "name": "Categorias", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/categorias", "host": ["{{base_url}}"], "path": ["categorias"] } } },
+        { "name": "Urgencias", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/urgencias", "host": ["{{base_url}}"], "path": ["urgencias"] } } },
+        { "name": "Ubicaciones", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/ubicaciones", "host": ["{{base_url}}"], "path": ["ubicaciones"] } } }
+      ]
+    },
+    {
+      "name": "Incidencias",
+      "item": [
+        {
+          "name": "Registrar incidencia",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"descripcion\": \"Cable suelto en el pasillo\",\n  \"categoria\": \"Infraestructura\",\n  \"urgencia\": \"Media\",\n  \"latitud\": -6.718,\n  \"longitud\": -79.907,\n  \"id_usuario\": {{id_usuario}},\n  \"id_ubicacion\": 0,\n  \"fecha\": \"\"\n}" },
+            "url": { "raw": "{{base_url}}/registrarIncidencia", "host": ["{{base_url}}"], "path": ["registrarIncidencia"] }
+          }
+        },
+        { "name": "Mis incidencias", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": { "raw": "{{base_url}}/misIncidencias/{{id_usuario}}", "host": ["{{base_url}}"], "path": ["misIncidencias", "{{id_usuario}}"] } } },
+        { "name": "Seguimiento (linea de tiempo)", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": { "raw": "{{base_url}}/seguimiento/{{id_incidencia}}", "host": ["{{base_url}}"], "path": ["seguimiento", "{{id_incidencia}}"] } } },
+        {
+          "name": "Reabrir incidencia",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"id_incidencia\": {{id_incidencia}},\n  \"id_usuario\": {{id_usuario}},\n  \"motivo\": \"El problema continua\"\n}" },
+            "url": { "raw": "{{base_url}}/reabrirIncidencia", "host": ["{{base_url}}"], "path": ["reabrirIncidencia"] }
+          }
+        },
+        {
+          "name": "Alerta rapida",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"id_usuario\": {{id_usuario}},\n  \"latitud\": -6.718,\n  \"longitud\": -79.907,\n  \"descripcion\": \"Emergencia\"\n}" },
+            "url": { "raw": "{{base_url}}/alertaRapida", "host": ["{{base_url}}"], "path": ["alertaRapida"] }
+          }
+        },
+        { "name": "Incidencias para el mapa", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/incidenciasMapa", "host": ["{{base_url}}"], "path": ["incidenciasMapa"] } } }
+      ]
+    },
+    {
+      "name": "Chat",
+      "item": [
+        { "name": "Listar mensajes", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": { "raw": "{{base_url}}/mensajes/{{id_incidencia}}", "host": ["{{base_url}}"], "path": ["mensajes", "{{id_incidencia}}"] } } },
+        {
+          "name": "Registrar mensaje",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"id_incidencia\": {{id_incidencia}},\n  \"id_usuario\": {{id_usuario}},\n  \"mensaje\": \"Hola, alguna novedad?\"\n}" },
+            "url": { "raw": "{{base_url}}/registrarMensaje", "host": ["{{base_url}}"], "path": ["registrarMensaje"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Calificacion",
+      "item": [
+        { "name": "Obtener calificacion", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": { "raw": "{{base_url}}/calificacion/{{id_incidencia}}", "host": ["{{base_url}}"], "path": ["calificacion", "{{id_incidencia}}"] } } },
+        {
+          "name": "Registrar calificacion",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"id_incidencia\": {{id_incidencia}},\n  \"puntuacion\": 5,\n  \"comentario\": \"Buena atencion\"\n}" },
+            "url": { "raw": "{{base_url}}/registrarCalificacion", "host": ["{{base_url}}"], "path": ["registrarCalificacion"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notificaciones",
+      "item": [
+        { "name": "Listar notificaciones", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": { "raw": "{{base_url}}/notificaciones/{{id_usuario}}", "host": ["{{base_url}}"], "path": ["notificaciones", "{{id_usuario}}"] } } },
+        { "name": "Marcar notificacion leida", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": { "raw": "{{base_url}}/notificaciones/leer/1", "host": ["{{base_url}}"], "path": ["notificaciones", "leer", "1"] } } }
+      ]
+    },
+    {
+      "name": "Evidencias (multipart)",
+      "item": [
+        {
+          "name": "Registrar evidencia",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "id_incidencia", "value": "{{id_incidencia}}", "type": "text" },
+                { "key": "imagen", "type": "file", "src": [] }
+              ]
+            },
+            "url": { "raw": "{{base_url}}/registrarEvidencia", "host": ["{{base_url}}"], "path": ["registrarEvidencia"] }
+          }
+        },
+        { "name": "Listar evidencias", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": { "raw": "{{base_url}}/evidencias/{{id_incidencia}}", "host": ["{{base_url}}"], "path": ["evidencias", "{{id_incidencia}}"] } } }
+      ]
+    }
+  ]
+}
