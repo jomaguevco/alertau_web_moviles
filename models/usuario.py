@@ -10,8 +10,7 @@ import secrets
 from datetime import datetime, timedelta
 from conexionBD import Conexion
 from tools.security import hash_password
-from flask import current_app
-from correo import enviar_correo
+
 
 class Usuario:
 
@@ -234,17 +233,8 @@ class Usuario:
             )
             con.commit()
 
-            # Formato para enviar correo
-            datosEnvio = {
-                'asunto':'Recuperar contraseña en AlertaU',
-                'remitente': 'yatraxyatusa@gmail.com',
-                'destinatario': correo,
-                'mensaje': 'Estimado(a), le saluda el equipo de AlertaU para hacerle entrega del codigo de seguridad para realizar el cambio de contraseña. El código es: '+codigo
-            }
-
-            # Envio de correo
-            enviar_correo(current_app.extensions['mail'],datosEnvio)
-
+            # El envio del correo con el codigo lo hace la ruta
+            # (routes/api.py -> recuperar_contrasenia) usando tools/email_util.py.
             return {'correo': correo, 'nombres': usuario['nombres'], 'codigo': codigo}
         except Exception as e:
             con.rollback()
