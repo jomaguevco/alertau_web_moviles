@@ -10,3 +10,4 @@ PyJWT==2.9.0            # Tokens JWT para la API REST que consume la app movil
 firebase-admin==6.5.0   # Envio de notificaciones push (FCM) a la app movil (req. #9)
 python-dotenv==1.0.1    # Cargar variables de entorno desde .env en local
 gunicorn==23.0.0        # Servidor WSGI para produccion (Railway / Render)
+# pip install flask_mail
