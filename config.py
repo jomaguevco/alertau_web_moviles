@@ -54,3 +54,26 @@ class Config:
     SMTP_USER = os.environ.get('SMTP_USER', '')                 # tu correo
     SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')         # contrasena de aplicacion
     SMTP_FROM = os.environ.get('SMTP_FROM', '') or SMTP_USER    # remitente mostrado
+
+    # --- Correo por HTTP (Brevo) para PRODUCCION (Railway, Render, etc.) ---
+    # Railway BLOQUEA el puerto SMTP saliente, asi que en la nube el envio por
+    # SMTP falla ("Network is unreachable"). Brevo envia por HTTPS (puerto 443),
+    # que si esta permitido. Si BREVO_API_KEY esta definida, email_util la usa;
+    # si no, cae al envio por SMTP (que sirve en local).
+    #   - Crea una cuenta gratis en https://www.brevo.com (300 correos/dia).
+    #   - Verifica tu Gmail como remitente y genera una API key (SMTP & API > API Keys).
+    BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '')
+    # Remitente que veran los usuarios. Por defecto usa el mismo que SMTP_FROM.
+    BREVO_SENDER = os.environ.get('BREVO_SENDER', '') or SMTP_FROM
+    BREVO_SENDER_NAME = os.environ.get('BREVO_SENDER_NAME', 'AlertaU')
+
+    # --- Correo por HTTP (Mailjet) para PRODUCCION (alternativa a Brevo) ---
+    # Igual que Brevo, envia por HTTPS (puerto 443) y funciona en Railway.
+    # Mailjet usa DOS claves (publica + secreta) con autenticacion basica.
+    #   - Cuenta gratis en https://www.mailjet.com (200 correos/dia).
+    #   - Verifica tu Gmail como remitente (Account > Senders & Domains).
+    #   - Copia las claves en Account Settings > API Key Management (REST API).
+    MAILJET_API_KEY = os.environ.get('MAILJET_API_KEY', '')          # API Key (publica)
+    MAILJET_SECRET_KEY = os.environ.get('MAILJET_SECRET_KEY', '')    # Secret Key (privada)
+    MAILJET_SENDER = os.environ.get('MAILJET_SENDER', '') or SMTP_FROM
+    MAILJET_SENDER_NAME = os.environ.get('MAILJET_SENDER_NAME', 'AlertaU')
