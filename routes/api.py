@@ -33,9 +33,14 @@ from tools.notificar import notificar_usuario
 ws_api = Blueprint('ws_api', __name__)
 
 # Endpoints PUBLICOS (no requieren token, porque ocurren antes de iniciar sesion).
+# Incluimos tambien la LECTURA de la foto de perfil: se carga con Glide en la app
+# y exigir token en una imagen es fragil (si el token no esta listo en ese instante,
+# la foto no se ve en miniatura/menu/perfil). Solo se expone VER la foto; subirla y
+# todo lo demas sigue protegido. Las EVIDENCIAS siguen exigiendo token (son sensibles).
 _ENDPOINTS_PUBLICOS = {
     'auth_usuario', 'listar_tipos_usuario', 'registrar_usuario',
     'recuperar_contrasenia', 'cambiar_contrasenia_con_codigo',
+    'ver_foto_perfil',
 }
 
 
