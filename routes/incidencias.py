@@ -10,7 +10,7 @@
 # ============================================================
 import os
 from flask import (Blueprint, render_template, request, redirect, url_for,
-                   session, flash, send_from_directory, Response)
+                   session, flash, send_from_directory, Response, jsonify)
 from config import Config
 from models.incidencia import Incidencia
 from models.catalogo import Catalogo
@@ -87,6 +87,23 @@ def detalle(id_incidencia):
 
 
 # ----------------------------------------------------------
+#  #7  Mensajes del chat en JSON (para el auto-refresh "en vivo")
+# ----------------------------------------------------------
+@ws_incidencias.route('/incidencias/<int:id_incidencia>/mensajes.json')
+@login_requerido
+def mensajes_json(id_incidencia):
+    filas = mensaje.listar(id_incidencia)
+    datos = [{
+        'autor': m['autor'],
+        'rol_autor': m['rol_autor'],
+        'mensaje': m['mensaje'],
+        'fecha': m['fecha'].strftime('%d/%m/%Y %H:%M') if m['fecha'] else '',
+        'id_usuario': m['id_usuario'],
+    } for m in filas]
+    return jsonify({'data': datos})
+
+
+# ----------------------------------------------------------
 #  #4  Cambiar el estado (con trazabilidad)
 # ----------------------------------------------------------
 @ws_incidencias.route('/incidencias/<int:id_incidencia>/estado', methods=['POST'])
@@ -147,7 +164,12 @@ def derivar(id_incidencia):
 @login_requerido
 def enviar_mensaje(id_incidencia):
     texto = request.form.get('mensaje', '').strip()
+    # El chat "en vivo" envia por fetch con esta cabecera; si falta, es un POST normal.
+    es_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     if not texto:
+        if es_ajax:
+            return jsonify({'status': 0, 'message': 'El mensaje no puede estar vacio.'}), 400
         flash('El mensaje no puede estar vacio.', 'danger')
         return redirect(url_for('ws_incidencias.detalle', id_incidencia=id_incidencia))
 
@@ -159,6 +181,8 @@ def enviar_mensaje(id_incidencia):
         notificar_usuario(reportante['id_usuario'],
                           f'El personal te escribio sobre tu incidencia #{id_incidencia}.')
 
+    if es_ajax:
+        return jsonify({'status': 1, 'message': 'Mensaje enviado.'})
     flash('Mensaje enviado.', 'success')
     return redirect(url_for('ws_incidencias.detalle', id_incidencia=id_incidencia))
 

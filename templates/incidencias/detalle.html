@@ -152,26 +152,18 @@
       </div>
     </div>
 
-    <!-- Chat / seguimiento (req. #7) -->
+    <!-- Chat / seguimiento (req. #7) - se refresca solo (auto-refresh) -->
     <div class="card shadow-sm">
       <div class="card-header bg-white fw-bold"><i class="bi bi-chat-dots"></i> Chat de seguimiento</div>
-      <div class="card-body" style="max-height: 300px; overflow-y: auto;">
-        {% for m in mensajes %}
-          <div class="mb-2">
-            <div>
-              <strong class="small">{{ m.autor }}</strong>
-              <span class="badge bg-light text-dark">{{ m.rol_autor }}</span>
-              <small class="text-muted">{{ m.fecha.strftime('%d/%m/%Y %H:%M') }}</small>
-            </div>
-            <div class="border rounded p-2 bg-light">{{ m.mensaje }}</div>
-          </div>
-        {% else %}
-          <p class="text-muted">Aun no hay mensajes.</p>
-        {% endfor %}
+      <div id="chatMensajes" class="card-body" style="max-height: 300px; overflow-y: auto;">
+        <p class="text-muted">Cargando mensajes...</p>
       </div>
       <div class="card-footer bg-white">
-        <form method="POST" action="{{ url_for('ws_incidencias.enviar_mensaje', id_incidencia=inc.id) }}" class="d-flex gap-2">
-          <input type="text" name="mensaje" class="form-control form-control-sm" placeholder="Escribe un mensaje..." required>
+        <form id="formMensaje" method="POST"
+              action="{{ url_for('ws_incidencias.enviar_mensaje', id_incidencia=inc.id) }}"
+              class="d-flex gap-2">
+          <input id="inputMensaje" type="text" name="mensaje" class="form-control form-control-sm"
+                 placeholder="Escribe un mensaje..." autocomplete="off" required>
           <button class="btn btn-sm btn-primary"><i class="bi bi-send"></i></button>
         </form>
       </div>
@@ -179,4 +171,89 @@
 
   </div>
 </div>
+
+<!-- ====== Chat en vivo (auto-refresh por polling + envio AJAX) ====== -->
+<script>
+(function () {
+  const urlMensajes = "{{ url_for('ws_incidencias.mensajes_json', id_incidencia=inc.id) }}";
+  const urlEnviar   = "{{ url_for('ws_incidencias.enviar_mensaje', id_incidencia=inc.id) }}";
+  const yoId        = {{ session['usuario_id'] }};
+  const cont        = document.getElementById('chatMensajes');
+  const form        = document.getElementById('formMensaje');
+  const input       = document.getElementById('inputMensaje');
+  let ultimaFirma   = "";   // para detectar si hubo cambios y evitar redibujar de mas
+
+  function pintar(mensajes) {
+    // Firma simple: si nada cambio, no redibujamos (asi no perdemos el scroll).
+    const firma = JSON.stringify(mensajes.map(m => [m.autor, m.mensaje, m.fecha]));
+    if (firma === ultimaFirma) return;
+    ultimaFirma = firma;
+
+    cont.innerHTML = "";
+    if (!mensajes.length) {
+      cont.innerHTML = '<p class="text-muted">Aun no hay mensajes.</p>';
+      return;
+    }
+
+    mensajes.forEach(m => {
+      const propio = m.id_usuario === yoId;
+
+      const wrap = document.createElement('div');
+      wrap.className = 'mb-2 d-flex ' + (propio ? 'justify-content-end' : 'justify-content-start');
+
+      const burbuja = document.createElement('div');
+      burbuja.style.maxWidth = '85%';
+
+      const cab = document.createElement('div');
+      const nombre = document.createElement('strong');
+      nombre.className = 'small';
+      nombre.textContent = propio ? 'Tú' : (m.autor || '');
+      const rol = document.createElement('span');
+      rol.className = 'badge bg-light text-dark ms-1';
+      rol.textContent = m.rol_autor || '';
+      const fecha = document.createElement('small');
+      fecha.className = 'text-muted ms-1';
+      fecha.textContent = m.fecha || '';
+      cab.appendChild(nombre); cab.appendChild(rol); cab.appendChild(fecha);
+
+      const cuerpo = document.createElement('div');
+      cuerpo.className = 'border rounded p-2 ' + (propio ? 'bg-success-subtle' : 'bg-light');
+      cuerpo.textContent = m.mensaje;   // textContent evita inyeccion de HTML
+
+      burbuja.appendChild(cab);
+      burbuja.appendChild(cuerpo);
+      wrap.appendChild(burbuja);
+      cont.appendChild(wrap);
+    });
+
+    cont.scrollTop = cont.scrollHeight;   // bajar al ultimo mensaje
+  }
+
+  function cargar() {
+    fetch(urlMensajes, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(r => r.json())
+      .then(d => pintar(d.data || []))
+      .catch(() => {});
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const texto = input.value.trim();
+    if (!texto) return;
+    const datos = new FormData();
+    datos.append('mensaje', texto);
+    fetch(urlEnviar, {
+      method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      body: datos
+    })
+      .then(r => r.json())
+      .then(() => { input.value = ''; cargar(); })
+      .catch(() => {});
+  });
+
+  cargar();                    // carga inicial
+  setInterval(cargar, 4000);   // refresco "en vivo" cada 4 segundos
+})();
+</script>
 {% endblock %}

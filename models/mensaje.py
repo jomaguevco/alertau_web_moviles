@@ -34,12 +34,18 @@ class Mensaje:
         return resultado
 
     def listar_movil(self, incidencia_id):
-        """Lista los mensajes con los campos que espera el modelo Mensaje de la app."""
+        """Lista los mensajes con los campos que espera el modelo Mensaje de la app,
+        incluyendo autor y rol para que el chat movil muestre quien envia cada mensaje."""
         con = Conexion().open
         cursor = con.cursor()
         cursor.execute(
-            """SELECT id, id_incidencia, id_usuario, mensaje, fecha
-               FROM mensaje WHERE id_incidencia = %s ORDER BY fecha ASC, id ASC""",
+            """SELECT m.id, m.id_incidencia, m.id_usuario, m.mensaje, m.fecha,
+                      CONCAT(u.nombres, ' ', u.apellidos) AS autor,
+                      t.nombre AS rol_autor
+               FROM mensaje m
+               INNER JOIN usuario u      ON m.id_usuario = u.id
+               INNER JOIN tipo_usuario t ON u.id_tipo_usuario = t.id
+               WHERE m.id_incidencia = %s ORDER BY m.fecha ASC, m.id ASC""",
             [incidencia_id]
         )
         resultado = cursor.fetchall()
