@@ -7,7 +7,7 @@
 #   - verificar_password()-> al iniciar sesion.
 # ============================================================
 from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError
+from argon2.exceptions import VerifyMismatchError, InvalidHashError, VerificationError
 
 # Un unico objeto PasswordHasher reutilizable en toda la app.
 ph = PasswordHasher()
@@ -24,7 +24,11 @@ def verificar_password(hash_guardado, password_plain):
     Devuelve True si coinciden, False si no.
     """
     try:
-        ph.verify(hash_guardado, password_plain)
+        ph.verify(hash_guardado or '', password_plain)
         return True
-    except VerifyMismatchError:
+    except (VerifyMismatchError, InvalidHashError, VerificationError):
+        # VerifyMismatchError: la contrasena no coincide.
+        # InvalidHashError/VerificationError: el hash guardado no es argon2 valido
+        # (texto plano, NULL, otro algoritmo). En todos los casos: acceso denegado,
+        # nunca un error 500 delante del usuario.
         return False

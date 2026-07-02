@@ -58,4 +58,8 @@ def home():
 # En produccion lo arranca gunicorn (ver Procfile).
 if __name__ == '__main__':
     puerto = int(os.environ.get('PORT', 3007))
-    app.run(port=puerto, debug=True, host='0.0.0.0')
+    # debug se activa SOLO si defines FLASK_DEBUG=1. Por defecto queda apagado
+    # para no exponer el debugger de Werkzeug ni mostrar trazas de error al
+    # usuario (importante en una demostracion). Para desarrollar: FLASK_DEBUG=1.
+    modo_debug = os.environ.get('FLASK_DEBUG', '0') == '1'
+    app.run(port=puerto, debug=modo_debug, host='0.0.0.0')

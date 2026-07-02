@@ -22,14 +22,18 @@ class Reporte:
         cursor = con.cursor()
 
         # Una sola consulta calcula varios contadores usando SUM(CASE...).
-        # id_estado 6 = 'Cerrado'. id_urgencia 4 = 'Critica'.
+        # Criterio unico de "finalizada": id_estado IN (5 'Resuelto', 6 'Cerrado'),
+        # coherente con el calculo del tiempo promedio. id_urgencia 4 = 'Critica'.
+        # 'criticas' = criticos AUN PENDIENTES (no finalizados), que es lo que
+        # comunica la tarjeta roja del dashboard.
         sql = """
             SELECT
-                COUNT(*)                                              AS total,
-                SUM(CASE WHEN i.id_urgencia = 4 OR i.es_alerta_rapida = 1
-                         THEN 1 ELSE 0 END)                           AS criticas,
-                SUM(CASE WHEN i.id_estado = 6 THEN 1 ELSE 0 END)      AS cerradas,
-                SUM(CASE WHEN i.id_estado <> 6 THEN 1 ELSE 0 END)     AS abiertas
+                COUNT(*)                                                 AS total,
+                SUM(CASE WHEN (i.id_urgencia = 4 OR i.es_alerta_rapida = 1)
+                              AND i.id_estado NOT IN (5, 6)
+                         THEN 1 ELSE 0 END)                              AS criticas,
+                SUM(CASE WHEN i.id_estado IN (5, 6) THEN 1 ELSE 0 END)   AS cerradas,
+                SUM(CASE WHEN i.id_estado NOT IN (5, 6) THEN 1 ELSE 0 END) AS abiertas
             FROM incidencia i
         """
         cursor.execute(sql)
@@ -174,6 +178,7 @@ class Reporte:
             FROM calificacion cal
             INNER JOIN incidencia i ON cal.id_incidencia = i.id
             INNER JOIN estado e ON i.id_estado = e.id
+            WHERE i.id_estado IN (5, 6)
             ORDER BY i.id
         """
         return self._agrupado(sql)
