@@ -1,0 +1,73 @@
+<!--
+  ============================================================
+   ubicaciones/qr.html  -  Codigos QR de los ambientes
+  ------------------------------------------------------------
+   Muestra un QR por cada ambiente del campus (aula, lab, taller)
+   con su codigo (ubicacion.codigo_qr). El QR se genera en el
+   navegador con qrcode.js (CDN). Boton "Imprimir" para pegarlos.
+   La app movil escanea el codigo y reconoce el ambiente (req. #4).
+  ============================================================
+-->
+{% extends 'base.html' %}
+{% block titulo %}AlertaU - Codigos QR{% endblock %}
+
+{% block contenido %}
+<div class="d-flex justify-content-between align-items-center mb-3 no-print">
+  <div>
+    <h4 class="mb-0"><i class="bi bi-qr-code"></i> Codigos QR de ambientes</h4>
+    <small class="text-muted">Imprime y pega cada QR en su ambiente. La app lo escanea para reconocer el lugar.</small>
+  </div>
+  <button class="btn btn-primary" onclick="window.print()">
+    <i class="bi bi-printer"></i> Imprimir
+  </button>
+</div>
+
+{% if ubicaciones %}
+  <div class="row g-3">
+    {% for u in ubicaciones %}
+      <div class="col-6 col-md-4 col-lg-3">
+        <div class="card shadow-sm h-100 text-center qr-card">
+          <div class="card-body d-flex flex-column align-items-center">
+            <!-- qrcode.js dibuja el QR dentro de este div (usa data-qr) -->
+            <div class="qrbox" data-qr="{{ u.codigo_qr }}"></div>
+            <div class="fw-bold mt-2">{{ u.nombre }}</div>
+            <div class="small text-muted">{{ u.tipo }}</div>
+            <span class="badge bg-secondary mt-1">{{ u.codigo_qr }}</span>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="alert alert-info">
+    No hay ambientes con codigo QR registrados. Agrega ubicaciones con
+    <code>codigo_qr</code> en la base de datos para generarlos aqui.
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<!-- Libreria para generar el QR en el navegador (sin dependencias en el backend) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+  // Por cada .qrbox generamos su QR con el texto de data-qr (el codigo_qr de la BD).
+  document.querySelectorAll('.qrbox').forEach(function (el) {
+    new QRCode(el, {
+      text: el.dataset.qr,
+      width: 150,
+      height: 150,
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  });
+</script>
+<style>
+  .qrbox { display: inline-block; }
+  /* Al imprimir: ocultar navegacion/botones y ajustar la cuadricula. */
+  @media print {
+    .navbar, .no-print, .alert-dismissible { display: none !important; }
+    body { background: #fff !important; }
+    .qr-card { border: 1px solid #ccc !important; box-shadow: none !important; }
+    .col-6, .col-md-4, .col-lg-3 { width: 33.3333% !important; }
+  }
+</style>
+{% endblock %}

@@ -27,6 +27,7 @@ from routes.dashboard import ws_dashboard
 from routes.incidencias import ws_incidencias
 from routes.usuarios import ws_usuarios
 from routes.reportes import ws_reportes
+from routes.ubicaciones import ws_ubicaciones
 from routes.api import ws_api
 from config import Config
 
@@ -42,6 +43,7 @@ app.register_blueprint(ws_dashboard)
 app.register_blueprint(ws_incidencias)
 app.register_blueprint(ws_usuarios)
 app.register_blueprint(ws_reportes)
+app.register_blueprint(ws_ubicaciones)
 
 # API REST JSON para la app movil (bajo el prefijo /api). El panel web sigue
 # usando las rutas de arriba con sesion; esta capa usa JWT y devuelve JSON.
