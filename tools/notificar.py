@@ -38,3 +38,31 @@ def notificar_usuario(id_usuario, mensaje, titulo='AlertaU'):
         print(f"[notificar] No se pudo leer el token: {e}")
 
     enviar_push(token, titulo, mensaje)
+
+
+def notificar_personal(mensaje, titulo='AlertaU', roles=(3, 4)):
+    """Notifica (in-app + push) a TODO el personal de los roles indicados.
+    Por defecto Administrativo (3) y Personal autorizado (4). Se usa para
+    avisar a seguridad cuando entra una alerta rapida (boton de panico)."""
+    try:
+        con = Conexion().open
+        cur = con.cursor()
+        marcadores = ','.join(['%s'] * len(roles))
+        cur.execute(
+            f"SELECT id, fcm_token FROM usuario "
+            f"WHERE id_tipo_usuario IN ({marcadores}) AND estado = 1",
+            list(roles)
+        )
+        filas = cur.fetchall()
+        cur.close()
+        con.close()
+    except Exception as e:
+        print(f"[notificar] No se pudo leer el personal: {e}")
+        return
+
+    for f in filas:
+        try:
+            _notificacion.crear(f['id'], mensaje)
+        except Exception as e:
+            print(f"[notificar] No se pudo guardar aviso al personal {f['id']}: {e}")
+        enviar_push(f.get('fcm_token'), titulo, mensaje)

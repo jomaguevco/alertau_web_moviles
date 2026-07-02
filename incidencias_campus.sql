@@ -278,7 +278,8 @@ INSERT INTO area (id, nombre) VALUES
 -- Categorias (del documento del proyecto)
 INSERT INTO categoria (id, nombre) VALUES
   (1, 'Emergencia medica'), (2, 'Seguridad'), (3, 'Infraestructura'),
-  (4, 'Servicios basicos'), (5, 'Objetos perdidos'), (6, 'Laboratorio/Taller');
+  (4, 'Servicios basicos'), (5, 'Objetos perdidos'), (6, 'Laboratorio/Taller'),
+  (7, 'Emergencia');  -- categoria generica usada por el boton de alerta rapida (req. #13)
 
 -- Niveles de urgencia
 INSERT INTO urgencia (id, nombre) VALUES

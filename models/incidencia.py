@@ -380,7 +380,7 @@ class Incidencia:
     def alerta_rapida(self, id_usuario, latitud, longitud, descripcion=None):
         """
         Crea una incidencia critica de forma inmediata (boton de panico):
-        categoria 'Emergencia medica' (1), urgencia 'Critica' (4), es_alerta_rapida=1.
+        categoria 'Emergencia' (7), urgencia 'Critica' (4), es_alerta_rapida=1.
         """
         con = Conexion().open
         cursor = con.cursor()
@@ -389,7 +389,7 @@ class Incidencia:
             cursor.execute(
                 """INSERT INTO incidencia
                    (descripcion, id_categoria, id_urgencia, id_estado, id_usuario, latitud, longitud, es_alerta_rapida)
-                   VALUES (%s, 1, 4, 1, %s, %s, %s, 1)""",
+                   VALUES (%s, 7, 4, 1, %s, %s, %s, 1)""",
                 [texto, id_usuario, latitud, longitud]
             )
             nuevo_id = cursor.lastrowid

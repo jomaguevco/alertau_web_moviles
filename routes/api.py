@@ -28,7 +28,7 @@ from models.evidencia import Evidencia
 from tools.security import verificar_password
 from tools.jwt_utils import generar_token, verificar_token
 from tools.email_util import enviar_correo
-from tools.notificar import notificar_usuario
+from tools.notificar import notificar_usuario, notificar_personal
 
 ws_api = Blueprint('ws_api', __name__)
 
@@ -371,6 +371,11 @@ def alerta_rapida():
         return jsonify({'data': None, 'message': resultado, 'status': 0}), 400
 
     notificar_usuario(id_usuario, 'Tu alerta rapida fue recibida. El personal fue avisado.')
+    # Avisar al personal de seguridad (Administrativo y Personal autorizado) del caso critico.
+    notificar_personal(
+        f'ALERTA RAPIDA: nueva emergencia critica #{resultado}. Revisa el panel.',
+        titulo='🚨 Alerta rapida'
+    )
     return jsonify({'data': {'id': resultado}, 'message': 'Alerta rapida registrada', 'status': 1}), 201
 
 
